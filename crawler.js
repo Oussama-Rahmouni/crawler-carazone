@@ -35,11 +35,21 @@ class CarzoneBot {
             isDocker = true;
         } catch (e) { exec = undefined; }
 
+        const args = [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--disable-dev-shm-usage'
+        ];
+
+        if (process.env.PROXY_SERVER) {
+        args.push(`--proxy-server=${process.env.PROXY_SERVER}`);
+        }
+
         this.browser = await puppeteer.launch({
             // Headless in docker and visible locally so i can test it in both
             headless: isDocker ? "new" : false,
             executablePath: exec,
-            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+            args: args
         });
     }
 
@@ -53,6 +63,13 @@ class CarzoneBot {
             this.seen.add(url);
 
             const page = await this.browser.newPage();
+
+            if (process.env.PROXY_USERNAME && process.env.PROXY_PASSWORD) {
+            await page.authenticate({
+                username: process.env.PROXY_USERNAME,
+                password: process.env.PROXY_PASSWORD
+            });
+}
             
             // prevent large asssets to be uploaded
             await page.setRequestInterception(true);
@@ -83,8 +100,13 @@ class CarzoneBot {
                         .filter(l => l.includes(d) && l.includes('/used-cars'));
                 }, CONFIG.domain);
 
-                links.forEach(l => { if (!this.seen.has(l)) this.queue.push(l); });
-
+                // link discovery
+                links.forEach(l => { 
+                    if (!this.seen.has(l) && !this.queue.includes(l)) { 
+                        this.queue.push(l); 
+                    } 
+                });
+                
             } catch (err) {
                 console.error(`skipped ${url} due to err:`, err.message);
             } finally {
