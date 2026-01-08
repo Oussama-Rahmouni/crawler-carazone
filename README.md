@@ -10,7 +10,14 @@ The Dockerfile uses a root user and Alpine Linux to ensure it runs on any OS (Wi
 ## Running with Docker (Default Config, without proxy)
 
 **Run (PowerShell, Linux, or Mac)**
+1. Build the image
 
+```Bash
+docker build -t carzone-bot .
+```
+2. Run
+
+**Run (PowerShell, Linux, or Mac)**
 ```bash
 docker run --rm -v "$(pwd)/output:/app/output" carzone-bot
 ```
